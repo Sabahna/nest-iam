@@ -4,12 +4,16 @@ import { Prisma } from "../../prisma/generated/client2";
 
 export class CreateScopeDto {
   @IsString()
-  @ApiProperty({ required: true, type: String, example: "Create" })
+  @ApiProperty({ required: true, type: String, example: "invite" })
   name: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ required: false, type: String, example: "Scope for creating" })
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: "Scope for invitation",
+  })
   desc?: string;
 }
 

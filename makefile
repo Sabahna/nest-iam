@@ -1,6 +1,6 @@
 # Commands
-.PHONY: run
-run: 
+.PHONY: generate
+generate: 
 	yarn prisma generate --schema prisma/schema.prisma && yarn prisma generate --schema prisma/schema2.prisma
 
 .PHONY: build

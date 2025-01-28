@@ -9,19 +9,48 @@ datasource db {
 }
 
 model ScopeSql {
-  id   Int     @id @default(autoincrement())
-  name String
-  desc String?
+  id     Int             @id @default(autoincrement())
+  name   String          @unique
+  desc   String?
+  scopes PermissionSql[]
 
   @@index([id])
   @@map("scope")
 }
 
 model ResourceSql {
-  id   Int     @id @default(autoincrement())
-  name String
-  desc String?
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  desc        String?
+  permissions PermissionSql[]
 
   @@index([id])
   @@map("resource")
+}
+
+model PermissionSql {
+  id          Int                    @id @default(autoincrement())
+  title       String?
+  name        String                 @unique
+  desc        String?
+  resource    ResourceSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  resource_id Int
+  scope       ScopeSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
+  scope_id    Int
+  parent      RelatedPermissionSql[] @relation("children")
+  children    RelatedPermissionSql[] @relation("parent")
+
+  @@index([id, resource_id, scope_id])
+  @@map("permission")
+}
+
+model RelatedPermissionSql {
+  parent    PermissionSql @relation("parent", fields: [parent_id], references: [id], onDelete: Cascade)
+  parent_id Int
+  child     PermissionSql @relation("children", fields: [child_id], references: [id], onDelete: Cascade)
+  child_id  Int
+
+  @@id(name: "related_permission_id", [parent_id, child_id])
+  @@index([parent_id, child_id])
+  @@map("related_permission")
 }

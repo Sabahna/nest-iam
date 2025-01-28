@@ -3,6 +3,7 @@ import {
   CreatePermissionDto,
   Permission,
   PermissionList,
+  RelatedPermissionDto,
   UpdatePermissionDto,
 } from "../type/permission";
 import {
@@ -10,6 +11,13 @@ import {
   Resource,
   UpdateResourceDto,
 } from "../type/resource";
+import {
+  CreateRoleDto,
+  PermissionRoleDto,
+  Role,
+  RoleList,
+  UpdateRoleDto,
+} from "../type/role";
 import { CreateScopeDto, Scope, UpdateScopeDto } from "../type/scope";
 import { convertNosqlFormat } from "../utils/convert-to-nosql-format";
 import { NestIamDbService } from "./nest-iam.db.service";
@@ -47,6 +55,31 @@ type PermissionGetPayload = Array<{
       };
     };
   }[];
+}>;
+
+type RoleGetPayload = Array<{
+  id: string;
+  name: string;
+  desc: string | null;
+  uuid: string;
+  permission_roles: Array<{
+    permission: {
+      id: string;
+      title: string | null;
+      name: string;
+      desc: string | null;
+      resource: {
+        id: string;
+        name: string;
+        desc: string | null;
+      };
+      scope: {
+        id: string;
+        name: string;
+        desc: string | null;
+      };
+    };
+  }>;
 }>;
 
 @Global()
@@ -297,42 +330,246 @@ export class NestIamCoreService {
   }
 
   async addRelatedPermission(
-    parent_id: string,
-    child_id: string,
+    relatedPermission: RelatedPermissionDto,
   ): Promise<void> {
     if (this.service.isNoSql()) {
       await this.service.noSql.relatedPermissionNoSql.create({
-        data: { parent_id, child_id },
+        data: {
+          parent_id: relatedPermission.parent_id,
+          child_id: relatedPermission.child_id,
+        },
       });
       return;
     }
 
     await this.service.sql.relatedPermissionSql.create({
-      data: { parent_id: Number(parent_id), child_id: Number(child_id) },
+      data: {
+        parent_id: Number(relatedPermission.parent_id),
+        child_id: Number(relatedPermission.child_id),
+      },
     });
   }
 
   async deleteRelatedPermission(
-    parent_id: string,
-    child_id: string,
+    relatedPermission: RelatedPermissionDto,
   ): Promise<void> {
     if (this.service.isNoSql()) {
-      const relatedPermission =
+      const related_permission =
         await this.service.noSql.relatedPermissionNoSql.findFirst({
-          where: { parent_id, child_id },
+          where: {
+            parent_id: relatedPermission.parent_id,
+            child_id: relatedPermission.child_id,
+          },
         });
-      if (relatedPermission) {
+      if (related_permission) {
         await this.service.noSql.relatedPermissionNoSql.delete({
-          where: { id: relatedPermission.id },
+          where: { id: related_permission.id },
         });
       }
+      return;
     }
 
     await this.service.sql.relatedPermissionSql.delete({
       where: {
         related_permission_id: {
-          parent_id: Number(parent_id),
-          child_id: Number(child_id),
+          parent_id: Number(relatedPermission.parent_id),
+          child_id: Number(relatedPermission.child_id),
+        },
+      },
+    });
+  }
+
+  private async roleToNoSql(roles: any): Promise<RoleGetPayload> {
+    return roles.map((data) => {
+      return {
+        ...data,
+        id: data.id.toString(),
+        permission_roles: data.permission_roles.map((permission) => {
+          return {
+            permission: {
+              ...permission.permission,
+              id: permission.permission.id.toString(),
+              resource: {
+                ...permission.permission.resource,
+                id: permission.permission.resource.id.toString(),
+              },
+              scope: {
+                ...permission.permission.scope,
+                id: permission.permission.scope.id.toString(),
+              },
+            },
+          };
+        }),
+      };
+    });
+  }
+
+  async createRole(role: CreateRoleDto): Promise<Role> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.roleNoSql.create({
+        data: {
+          name: role.name,
+          desc: role.desc,
+          uuid: role.uuid,
+          permission_roles: {
+            create: role.permissions.map((id) => ({
+              permission_id: id,
+            })),
+          },
+        },
+      });
+    }
+
+    return this.service.sql.roleSql
+      .create({
+        data: {
+          name: role.name,
+          desc: role.desc,
+          uuid: role.uuid,
+          permission_roles: {
+            create: role.permissions.map((id) => ({
+              permission_id: Number(id),
+            })),
+          },
+        },
+      })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async getRoles(): Promise<RoleList> {
+    let roles: RoleGetPayload = [];
+    if (this.service.isNoSql()) {
+      roles = await this.service.noSql.roleNoSql.findMany({
+        include: {
+          permission_roles: {
+            select: {
+              permission: {
+                select: {
+                  id: true,
+                  title: true,
+                  name: true,
+                  desc: true,
+                  resource: true,
+                  scope: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    } else {
+      roles = await this.service.sql.roleSql
+        .findMany({
+          include: {
+            permission_roles: {
+              select: {
+                permission: {
+                  select: {
+                    id: true,
+                    title: true,
+                    name: true,
+                    desc: true,
+                    resource: true,
+                    scope: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+        .then((res) => {
+          return this.roleToNoSql(res);
+        });
+    }
+
+    return roles.map((data) => {
+      return {
+        id: data.id,
+        name: data.name,
+        desc: data.desc,
+        uuid: data.uuid,
+        permissions: data.permission_roles.map(
+          (permission) => permission.permission,
+        ),
+      }; // Flattening the children structure
+    });
+  }
+
+  async updateRole(id: string, role: UpdateRoleDto): Promise<Role> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.roleNoSql.update({
+        where: { id: id },
+        data: role,
+      });
+    }
+
+    return this.service.sql.roleSql
+      .update({
+        where: { id: Number(id) },
+        data: role,
+      })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async deleteRole(id: string): Promise<Role> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.roleNoSql.delete({ where: { id: id } });
+    }
+
+    return this.service.sql.roleSql
+      .delete({ where: { id: Number(id) } })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async addPermissionToRole(permissionRole: PermissionRoleDto): Promise<void> {
+    if (this.service.isNoSql()) {
+      await this.service.noSql.permissionRoleNoSql.create({
+        data: {
+          role_id: permissionRole.role_id,
+          permission_id: permissionRole.permission_id,
+        },
+      });
+      return;
+    }
+
+    await this.service.sql.permissionRoleSql.create({
+      data: {
+        role_id: Number(permissionRole.role_id),
+        permission_id: Number(permissionRole.permission_id),
+      },
+    });
+  }
+
+  async deletePermissionFromRole(
+    permissionRole: PermissionRoleDto,
+  ): Promise<void> {
+    if (this.service.isNoSql()) {
+      const role = await this.service.noSql.permissionRoleNoSql.findFirst({
+        where: {
+          role_id: permissionRole.role_id,
+          permission_id: permissionRole.permission_id,
+        },
+      });
+      if (role) {
+        await this.service.noSql.permissionRoleNoSql.delete({
+          where: { id: role.id },
+        });
+      }
+
+      return;
+    }
+
+    await this.service.sql.permissionRoleSql.delete({
+      where: {
+        permission_role_id: {
+          role_id: Number(permissionRole.role_id),
+          permission_id: Number(permissionRole.permission_id),
         },
       },
     });

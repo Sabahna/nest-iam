@@ -44,7 +44,15 @@ export class UpdatePermissionDto extends PartialType(
   OmitType(CreatePermissionDto, ["related_permissions"] as const),
 ) {}
 
-export class RelatedPermissionDto {}
+export class RelatedPermissionDto {
+  @IsString()
+  @ApiProperty({ required: true, type: String, example: "1" })
+  parent_id: string;
+
+  @IsString()
+  @ApiProperty({ required: true, type: String, example: "1" })
+  child_id: string;
+}
 
 const permission = Prisma.validator<Prisma.PermissionNoSqlDefaultArgs>()({});
 

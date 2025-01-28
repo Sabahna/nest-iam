@@ -29,16 +29,17 @@ model ResourceSql {
 }
 
 model PermissionSql {
-  id          Int                    @id @default(autoincrement())
-  title       String?
-  name        String                 @unique
-  desc        String?
-  resource    ResourceSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
-  resource_id Int
-  scope       ScopeSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
-  scope_id    Int
-  parent      RelatedPermissionSql[] @relation("children")
-  children    RelatedPermissionSql[] @relation("parent")
+  id               Int                    @id @default(autoincrement())
+  title            String?
+  name             String                 @unique
+  desc             String?
+  resource         ResourceSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  resource_id      Int
+  scope            ScopeSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
+  scope_id         Int
+  permission_roles PermissionRoleSql[]
+  parent           RelatedPermissionSql[] @relation("children")
+  children         RelatedPermissionSql[] @relation("parent")
 
   @@index([id, resource_id, scope_id])
   @@map("permission")
@@ -53,4 +54,26 @@ model RelatedPermissionSql {
   @@id(name: "related_permission_id", [parent_id, child_id])
   @@index([parent_id, child_id])
   @@map("related_permission")
+}
+
+model RoleSql {
+  id               Int                 @id @default(autoincrement())
+  name             String
+  desc             String?
+  uuid             String
+  permission_roles PermissionRoleSql[]
+
+  @@index([id])
+  @@map("role")
+}
+
+model PermissionRoleSql {
+  permission    PermissionSql @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  permission_id Int
+  role          RoleSql       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id       Int
+
+  @@id(name: "permission_role_id", [permission_id, role_id])
+  @@index([permission_id, role_id])
+  @@map("permission_role")
 }

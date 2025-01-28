@@ -29,16 +29,17 @@ model ResourceNoSql {
 }
 
 model PermissionNoSql {
-  id          String                   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String?
-  name        String                   @unique
-  desc        String?
-  resource    ResourceNoSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
-  resource_id String                   @db.ObjectId
-  scope       ScopeNoSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
-  scope_id    String                   @db.ObjectId
-  parent      RelatedPermissionNoSql[] @relation("children")
-  children    RelatedPermissionNoSql[] @relation("parent")
+  id               String                   @id @default(auto()) @map("_id") @db.ObjectId
+  title            String?
+  name             String                   @unique
+  desc             String?
+  resource         ResourceNoSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  resource_id      String                   @db.ObjectId
+  scope            ScopeNoSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
+  scope_id         String                   @db.ObjectId
+  permission_roles PermissionRoleNoSql[]
+  parent           RelatedPermissionNoSql[] @relation("children")
+  children         RelatedPermissionNoSql[] @relation("parent")
 
   @@index([id, resource_id, scope_id])
   @@map("permission")
@@ -53,4 +54,26 @@ model RelatedPermissionNoSql {
 
   @@index([parent_id, child_id])
   @@map("related_permission")
+}
+
+model RoleNoSql {
+  id               String                @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  desc             String?
+  uuid             String
+  permission_roles PermissionRoleNoSql[]
+
+  @@index([id])
+  @@map("role")
+}
+
+model PermissionRoleNoSql {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  permission    PermissionNoSql @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  permission_id String          @db.ObjectId
+  role          RoleNoSql       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id       String          @db.ObjectId
+
+  @@index([permission_id, role_id])
+  @@map("permission_role")
 }

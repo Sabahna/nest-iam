@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, PartialType } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 import { Prisma } from "../../prisma/generated/client2";
 
@@ -12,6 +12,8 @@ export class CreateScopeDto {
   @ApiProperty({ required: false, type: String, example: "Scope for creating" })
   desc?: string;
 }
+
+export class UpdateScopeDto extends PartialType(CreateScopeDto) {}
 
 const scope = Prisma.validator<Prisma.ScopeNoSqlDefaultArgs>()({});
 

@@ -1,4 +1,4 @@
-import { Global, Inject, Injectable } from "@nestjs/common";
+import { Global, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import {
   CreatePermissionDto,
   Permission,
@@ -57,7 +57,7 @@ type PermissionGetPayload = Array<{
   }[];
 }>;
 
-type RoleGetPayload = Array<{
+type RoleGetPayload = {
   id: string;
   name: string;
   desc: string | null;
@@ -80,7 +80,7 @@ type RoleGetPayload = Array<{
       };
     };
   }>;
-}>;
+};
 
 @Global()
 @Injectable()
@@ -243,7 +243,12 @@ export class NestIamCoreService {
         },
       })
       .then((res) => {
-        return convertNosqlFormat(res);
+        return {
+          ...res,
+          id: res.id.toString(),
+          resource_id: res.resource_id.toString(),
+          scope_id: res.scope_id.toString(),
+        };
       });
   }
 
@@ -260,7 +265,18 @@ export class NestIamCoreService {
           scope: true,
           resource: true,
           children: {
-            select: { child: { include: { resource: true, scope: true } } },
+            select: {
+              child: {
+                select: {
+                  id: true,
+                  title: true,
+                  name: true,
+                  desc: true,
+                  resource: true,
+                  scope: true,
+                },
+              },
+            },
           },
         },
       });
@@ -275,7 +291,18 @@ export class NestIamCoreService {
             scope: true,
             resource: true,
             children: {
-              select: { child: { include: { resource: true, scope: true } } },
+              select: {
+                child: {
+                  select: {
+                    id: true,
+                    title: true,
+                    name: true,
+                    desc: true,
+                    resource: true,
+                    scope: true,
+                  },
+                },
+              },
             },
           },
         })
@@ -313,7 +340,12 @@ export class NestIamCoreService {
         },
       })
       .then((res) => {
-        return convertNosqlFormat(res);
+        return {
+          ...res,
+          id: res.id.toString(),
+          resource_id: res.resource_id.toString(),
+          scope_id: res.scope_id.toString(),
+        };
       });
   }
 
@@ -325,7 +357,12 @@ export class NestIamCoreService {
     return this.service.sql.permissionSql
       .delete({ where: { id: Number(id) } })
       .then((res) => {
-        return convertNosqlFormat(res);
+        return {
+          ...res,
+          id: res.id.toString(),
+          resource_id: res.resource_id.toString(),
+          scope_id: res.scope_id.toString(),
+        };
       });
   }
 
@@ -379,7 +416,7 @@ export class NestIamCoreService {
     });
   }
 
-  private async roleToNoSql(roles: any): Promise<RoleGetPayload> {
+  private async roleToNoSql(roles: any): Promise<RoleGetPayload[]> {
     return roles.map((data) => {
       return {
         ...data,
@@ -404,7 +441,25 @@ export class NestIamCoreService {
     });
   }
 
+  private async prepareRolePermissions(permissions: string[]) {
+    const allPermissions: string[] = [];
+    const parentPermissions = await this.getPermissions().then((res) => {
+      return res.filter((permission) => permissions.includes(permission.id));
+    });
+    parentPermissions.forEach((permission) => {
+      allPermissions.push(permission.id);
+      permission.children.forEach((child) => {
+        allPermissions.push(child.id);
+      });
+    });
+    // Make Unique values (remove duplicates)
+    const setAllPermissions = new Set(allPermissions);
+    return Array.from(setAllPermissions);
+  }
+
   async createRole(role: CreateRoleDto): Promise<Role> {
+    role.permissions = await this.prepareRolePermissions(role.permissions);
+
     if (this.service.isNoSql()) {
       return this.service.noSql.roleNoSql.create({
         data: {
@@ -438,10 +493,11 @@ export class NestIamCoreService {
       });
   }
 
-  async getRoles(): Promise<RoleList> {
-    let roles: RoleGetPayload = [];
+  async getRoles(uuid?: string): Promise<RoleList[]> {
+    let roles: RoleGetPayload[] = [];
     if (this.service.isNoSql()) {
       roles = await this.service.noSql.roleNoSql.findMany({
+        where: { uuid: uuid },
         include: {
           permission_roles: {
             select: {
@@ -497,6 +553,72 @@ export class NestIamCoreService {
     });
   }
 
+  async getRoleById(id: string, uuid?: string): Promise<RoleList> {
+    let data: RoleGetPayload | null = null;
+    if (this.service.isNoSql()) {
+      data = await this.service.noSql.roleNoSql.findUnique({
+        where: { id: id, uuid: uuid },
+        include: {
+          permission_roles: {
+            select: {
+              permission: {
+                select: {
+                  id: true,
+                  title: true,
+                  name: true,
+                  desc: true,
+                  resource: true,
+                  scope: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    } else {
+      data = await this.service.sql.roleSql
+        .findUnique({
+          where: { id: Number(id), uuid: uuid },
+          include: {
+            permission_roles: {
+              select: {
+                permission: {
+                  select: {
+                    id: true,
+                    title: true,
+                    name: true,
+                    desc: true,
+                    resource: true,
+                    scope: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+        .then(async (res) => {
+          if (res) {
+            return (await this.roleToNoSql([res]))[0];
+          }
+          return null;
+        });
+    }
+
+    if (data === null) {
+      throw new NotFoundException("Role not found");
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      desc: data.desc,
+      uuid: data.uuid,
+      permissions: data.permission_roles.map(
+        (permission) => permission.permission,
+      ),
+    };
+  }
+
   async updateRole(id: string, role: UpdateRoleDto): Promise<Role> {
     if (this.service.isNoSql()) {
       return this.service.noSql.roleNoSql.update({
@@ -528,24 +650,60 @@ export class NestIamCoreService {
   }
 
   async addPermissionToRole(permissionRole: PermissionRoleDto): Promise<void> {
+    const permissions = await this.prepareRolePermissions([
+      permissionRole.permission_id,
+    ]);
+    const existPermissions = await this.getRoleById(
+      permissionRole.role_id,
+    ).then((res) => {
+      return res.permissions.map((permission) => permission.id);
+    });
+    const allPermissions: string[] = [];
+    permissions.forEach((permission) => {
+      allPermissions.push(permission);
+    });
+    existPermissions.forEach((permission) => {
+      allPermissions.push(permission);
+    });
+    const setAllPermissions = [...new Set(allPermissions)];
+    const newPermissions = setAllPermissions.filter(
+      (permission) => !existPermissions.includes(permission),
+    );
+
     if (this.service.isNoSql()) {
-      await this.service.noSql.permissionRoleNoSql.create({
-        data: {
-          role_id: permissionRole.role_id,
-          permission_id: permissionRole.permission_id,
-        },
-      });
+      await Promise.all(
+        newPermissions.map((permission) => {
+          return this.service.noSql.permissionRoleNoSql.create({
+            data: {
+              role_id: permissionRole.role_id,
+              permission_id: permission,
+            },
+          });
+        }),
+      );
       return;
     }
 
-    await this.service.sql.permissionRoleSql.create({
-      data: {
-        role_id: Number(permissionRole.role_id),
-        permission_id: Number(permissionRole.permission_id),
-      },
-    });
+    await Promise.all(
+      newPermissions.map((permission) => {
+        return this.service.sql.permissionRoleSql.create({
+          data: {
+            role_id: Number(permissionRole.role_id),
+            permission_id: Number(permission),
+          },
+        });
+      }),
+    );
   }
 
+  /**
+   * @param {PermissionRoleDto} permissionRole - `permission_id` must be the parent permission id or the child permission id
+   *
+   * **Important Note:** The related child permission of this permission may also be linked to other remaining permissions in the role, ensure that you properly verify dependencies before removal.
+   *
+   * To handle this correctly, use the provided methods in your project to locate and remove each permission individually.
+   *
+   */
   async deletePermissionFromRole(
     permissionRole: PermissionRoleDto,
   ): Promise<void> {

@@ -9,10 +9,12 @@ datasource db {
 }
 
 model ScopeSql {
-  id     Int             @id @default(autoincrement())
-  name   String          @unique
-  desc   String?
-  scopes PermissionSql[]
+  id         Int             @id @default(autoincrement())
+  name       String          @unique
+  desc       String?
+  scopes     PermissionSql[]
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
 
   @@index([id])
   @@map("scope")
@@ -23,6 +25,8 @@ model ResourceSql {
   name        String          @unique
   desc        String?
   permissions PermissionSql[]
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
 
   @@index([id])
   @@map("resource")
@@ -40,6 +44,8 @@ model PermissionSql {
   permission_roles PermissionRoleSql[]
   parent           RelatedPermissionSql[] @relation("children")
   children         RelatedPermissionSql[] @relation("parent")
+  created_at       DateTime               @default(now())
+  updated_at       DateTime               @updatedAt
 
   @@index([id, resource_id, scope_id])
   @@map("permission")
@@ -62,6 +68,8 @@ model RoleSql {
   desc             String?
   uuid             String
   permission_roles PermissionRoleSql[]
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
 
   @@index([id])
   @@map("role")

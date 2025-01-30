@@ -36,6 +36,7 @@ export class CreateRoleDto {
     type: [String],
     isArray: true,
     example: ["1", "2"],
+    description: "List of parent permission id",
   })
   permissions: string[];
 }
@@ -50,7 +51,11 @@ export class PermissionRoleDto {
   role_id: string;
 
   @IsString()
-  @ApiProperty({ required: true, type: String, example: "1" })
+  @ApiProperty({
+    required: true,
+    type: String,
+    example: "1",
+  })
   permission_id: string;
 }
 
@@ -58,7 +63,7 @@ const role = Prisma.validator<Prisma.RoleNoSqlDefaultArgs>()({});
 
 export type Role = Prisma.RoleNoSqlGetPayload<typeof role>;
 
-export type RoleList = Array<{
+export type RoleList = {
   id: string;
   name: string;
   desc: string | null;
@@ -79,4 +84,4 @@ export type RoleList = Array<{
       desc: string | null;
     };
   }>;
-}>;
+};

@@ -1,4 +1,10 @@
-import { Global, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Global,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   CreatePermissionDto,
   Permission,
@@ -871,10 +877,33 @@ export class NestIamCoreService {
 
   async addRoleToUser(userRole: UserRoleDto): Promise<void> {
     if (this.service.isNoSql()) {
+      const existUserRole = await this.service.noSql.userRoleNoSql.findFirst({
+        where: {
+          user_id: userRole.user_id,
+          uuid: userRole.uuid,
+        },
+      });
+      if (existUserRole) {
+        throw new BadRequestException(
+          "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
+        );
+      }
       await this.service.noSql.userRoleNoSql.create({
         data: userRole,
       });
       return;
+    }
+
+    const existUserRole = await this.service.sql.userRoleSql.findFirst({
+      where: {
+        user_id: Number(userRole.user_id),
+        uuid: userRole.uuid,
+      },
+    });
+    if (existUserRole) {
+      throw new BadRequestException(
+        "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
+      );
     }
 
     await this.service.sql.userRoleSql.create({

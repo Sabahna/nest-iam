@@ -55,6 +55,7 @@ export class UserRoleDto {
   @ApiPropertyOptional({
     type: String,
     example: "default",
+    default: "default",
   })
   uuid: string = "default";
 }

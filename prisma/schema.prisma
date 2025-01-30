@@ -88,9 +88,10 @@ model PermissionRoleSql {
 }
 
 model UserSql {
-  id       Int           @id @default(autoincrement())
-  username String        @unique
+  id       Int              @id @default(autoincrement())
+  username String           @unique
   roles    UserRoleSql[]
+  sessions UserSessionSql[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -109,4 +110,18 @@ model UserRoleSql {
   @@id(name: "role_user_id", [user_id, role_id, uuid])
   @@index([user_id, role_id, uuid])
   @@map("role_user")
+}
+
+model UserSessionSql {
+  id            Int     @id @default(autoincrement())
+  token         String?
+  refresh_token String?
+  user_id       Int
+  user          UserSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([id, user_id])
+  @@map("session")
 }

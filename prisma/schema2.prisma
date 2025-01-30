@@ -88,9 +88,10 @@ model PermissionRoleNoSql {
 }
 
 model UserNoSql {
-  id       String          @id @default(auto()) @map("_id") @db.ObjectId
-  username String          @unique
+  id       String             @id @default(auto()) @map("_id") @db.ObjectId
+  username String             @unique
   roles    UserRoleNoSql[]
+  sessions UserSessionNoSql[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -109,4 +110,18 @@ model UserRoleNoSql {
 
   @@index([user_id, role_id, uuid])
   @@map("role_user")
+}
+
+model UserSessionNoSql {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  token         String?
+  refresh_token String?
+  user_id       String    @db.ObjectId
+  user          UserNoSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([id, user_id])
+  @@map("session")
 }

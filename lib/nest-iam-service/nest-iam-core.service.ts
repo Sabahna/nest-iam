@@ -25,6 +25,7 @@ import {
   UpdateRoleDto,
 } from "../type/role";
 import { CreateScopeDto, Scope, UpdateScopeDto } from "../type/scope";
+import { CreateSessionDto, UpdateSessionDto } from "../type/session";
 import {
   CreateUserDto,
   UpdateUserDto,
@@ -33,7 +34,8 @@ import {
   UserRoleDto,
 } from "../type/user";
 import { convertNosqlFormat } from "../utils/convert-to-nosql-format";
-import { NestIamDbService } from "./nest-iam.db.service";
+import { generateToken, verifyToken } from "./access.token";
+import { NestIamService } from "./nest-iam.service";
 
 type PermissionGetPayload = Array<{
   id: string;
@@ -98,7 +100,7 @@ type RoleGetPayload = {
 @Global()
 @Injectable()
 export class NestIamCoreService {
-  constructor(@Inject() private service: NestIamDbService) {}
+  constructor(@Inject() private service: NestIamService) {}
 
   async createScope(scope: CreateScopeDto): Promise<Scope> {
     if (this.service.isNoSql()) {
@@ -945,5 +947,95 @@ export class NestIamCoreService {
         },
       },
     });
+  }
+
+  private tokenGenerator(sessionId: string, userId: string) {
+    const tokenExpiredIn = `${this.service.configMaps.tokenExpiredTime}${this.service.configMaps.timeUnit}`;
+    const refreshTokenExpiredIn = `${this.service.configMaps.tokenExpiredTime}${this.service.configMaps.timeUnit}`;
+
+    const token = generateToken(
+      this.service.configMaps.secret,
+      { sid: sessionId, uid: userId },
+      tokenExpiredIn,
+    );
+    const refreshToken = generateToken(
+      this.service.configMaps.secret,
+      { sid: sessionId, uid: userId },
+      refreshTokenExpiredIn,
+    );
+
+    return { token, refreshToken };
+  }
+
+  async requestToken(session: CreateSessionDto) {
+    let sessionId: string;
+    if (this.service.isNoSql()) {
+      sessionId = (
+        await this.service.noSql.userSessionNoSql.create({
+          data: session,
+        })
+      ).id;
+    }
+
+    sessionId = (
+      await this.service.sql.userSessionSql.create({
+        data: { user_id: Number(session.user_id) },
+      })
+    ).id.toString();
+
+    const { token, refreshToken } = this.tokenGenerator(
+      sessionId,
+      session.user_id,
+    );
+
+    if (this.service.isNoSql()) {
+      await this.service.noSql.userSessionNoSql.update({
+        where: { id: sessionId },
+        data: {
+          token: token,
+          refresh_token: refreshToken,
+        },
+      });
+    } else {
+      await this.service.sql.userSessionSql.update({
+        where: { id: Number(sessionId) },
+        data: {
+          token: token,
+          refresh_token: refreshToken,
+        },
+      });
+    }
+  }
+
+  async refreshToken(session: UpdateSessionDto) {
+    const verificationToken = verifyToken({
+      jwtSecretKey: this.service.configMaps.secret,
+      token: session.refresh_token,
+      expiredMessage: this.service.configMaps.tokenExpiredMessage,
+      invalidMessage: this.service.configMaps.tokenInvalidMessage,
+    }) as { sid: string; uid: string };
+
+    const { token, refreshToken } = this.tokenGenerator(
+      verificationToken.sid,
+      verificationToken.uid,
+    );
+
+    if (this.service.isNoSql()) {
+      await this.service.noSql.userSessionNoSql.update({
+        where: { id: verificationToken.sid },
+        data: {
+          token: token,
+          refresh_token: refreshToken,
+        },
+      });
+    } else {
+      await this.service.sql.userSessionSql.update({
+        where: { id: Number(verificationToken.sid) },
+        data: {
+          token: token,
+          refresh_token: refreshToken,
+        },
+      });
+    }
   }
 }

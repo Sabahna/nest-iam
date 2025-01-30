@@ -1,4 +1,4 @@
-export interface AppModuleInterface {
+export class AppModuleInterface {
   provider:
     | "postgresql"
     | "mysql"
@@ -7,4 +7,10 @@ export interface AppModuleInterface {
     | "mongodb"
     | "cockroachdb";
   url: string;
+  tokenExpiredTime: number;
+  refreshTokenExpiredTime: number;
+  timeUnit: "s" | "m" | "h" | "d";
+  secret: string;
+  tokenExpiredMessage?: string;
+  tokenInvalidMessage?: string;
 }

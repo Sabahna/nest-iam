@@ -1005,6 +1005,8 @@ export class NestIamCoreService {
         },
       });
     }
+
+    return { token, refreshToken };
   }
 
   async refreshToken(session: UpdateSessionDto) {
@@ -1037,5 +1039,7 @@ export class NestIamCoreService {
         },
       });
     }
+
+    return { token, refreshToken };
   }
 }

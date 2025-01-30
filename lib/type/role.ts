@@ -24,7 +24,7 @@ export class CreateRoleDto {
     example: "default",
     default: "default",
     description:
-      "Identity for multiple role of user, eg: organization id or company id etc",
+      "Identity for multiple role of like each organization or company etc",
   })
   uuid: string = "default";
 

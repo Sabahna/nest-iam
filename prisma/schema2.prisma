@@ -68,6 +68,7 @@ model RoleNoSql {
   desc             String?
   uuid             String
   permission_roles PermissionRoleNoSql[]
+  users            UserRoleNoSql[]
   created_at       DateTime              @default(now())
   updated_at       DateTime              @updatedAt
 
@@ -84,4 +85,28 @@ model PermissionRoleNoSql {
 
   @@index([permission_id, role_id])
   @@map("permission_role")
+}
+
+model UserNoSql {
+  id       String          @id @default(auto()) @map("_id") @db.ObjectId
+  username String          @unique
+  roles    UserRoleNoSql[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([id, username])
+  @@map("user")
+}
+
+model UserRoleNoSql {
+  id      String    @id @default(auto()) @map("_id") @db.ObjectId
+  user    UserNoSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String    @db.ObjectId
+  role    RoleNoSql @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id String    @db.ObjectId
+  uuid    String
+
+  @@index([user_id, role_id, uuid])
+  @@map("role_user")
 }

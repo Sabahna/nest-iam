@@ -19,6 +19,13 @@ import {
   UpdateRoleDto,
 } from "../type/role";
 import { CreateScopeDto, Scope, UpdateScopeDto } from "../type/scope";
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  User,
+  UserList,
+  UserRoleDto,
+} from "../type/user";
 import { convertNosqlFormat } from "../utils/convert-to-nosql-format";
 import { NestIamDbService } from "./nest-iam.db.service";
 
@@ -728,6 +735,184 @@ export class NestIamCoreService {
         permission_role_id: {
           role_id: Number(permissionRole.role_id),
           permission_id: Number(permissionRole.permission_id),
+        },
+      },
+    });
+  }
+
+  async createUser(user: CreateUserDto): Promise<User> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.userNoSql.create({
+        data: {
+          username: user.username,
+          roles: {
+            create: {
+              role_id: user.role,
+              uuid: user.uuid,
+            },
+          },
+        },
+      });
+    }
+
+    return this.service.sql.userSql
+      .create({
+        data: {
+          username: user.username,
+          roles: {
+            create: {
+              role_id: Number(user.role),
+              uuid: user.uuid,
+            },
+          },
+        },
+      })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async getUsers(): Promise<UserList[]> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.userNoSql.findMany({
+        include: { roles: { select: { role: true, uuid: true } } },
+      });
+    }
+
+    return this.service.sql.userSql
+      .findMany({
+        include: { roles: { select: { role: true, uuid: true } } },
+      })
+      .then((res) => {
+        return res.map((data) => {
+          return {
+            id: data.id.toString(),
+            username: data.username,
+            roles: data.roles.map((role) => ({
+              role: { ...role.role, id: role.role.id.toString() },
+              uuid: role.uuid,
+            })),
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+          };
+        });
+      });
+  }
+
+  async getUserRole(id: string, uuid?: string): Promise<UserList | null> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.userNoSql.findFirst({
+        where: { id: id },
+        include: {
+          roles: {
+            where: { uuid: uuid },
+            select: { role: true, uuid: true },
+          },
+        },
+      });
+    }
+
+    return this.service.sql.userSql
+      .findFirst({
+        where: { id: Number(id) },
+        include: {
+          roles: { where: { uuid: uuid }, select: { role: true, uuid: true } },
+        },
+      })
+      .then((res) => {
+        if (res) {
+          return {
+            id: res.id.toString(),
+            username: res.username,
+            roles: res.roles.map((role) => ({
+              role: { ...role.role, id: role.role.id.toString() },
+              uuid: role.uuid,
+            })),
+            created_at: res.created_at,
+            updated_at: res.updated_at,
+          };
+        } else {
+          return null;
+        }
+      });
+  }
+
+  async updateUser(id: string, user: UpdateUserDto): Promise<User> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.userNoSql.update({
+        where: { id: id },
+        data: user,
+      });
+    }
+
+    return this.service.sql.userSql
+      .update({
+        where: { id: Number(id) },
+        data: user,
+      })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async deleteUser(id: string): Promise<User> {
+    if (this.service.isNoSql()) {
+      return this.service.noSql.userNoSql.delete({
+        where: { id: id },
+      });
+    }
+
+    return this.service.sql.userSql
+      .delete({ where: { id: Number(id) } })
+      .then((res) => {
+        return convertNosqlFormat(res);
+      });
+  }
+
+  async addRoleToUser(userRole: UserRoleDto): Promise<void> {
+    if (this.service.isNoSql()) {
+      await this.service.noSql.userRoleNoSql.create({
+        data: userRole,
+      });
+      return;
+    }
+
+    await this.service.sql.userRoleSql.create({
+      data: {
+        user_id: Number(userRole.user_id),
+        role_id: Number(userRole.role_id),
+        uuid: userRole.uuid,
+      },
+    });
+  }
+
+  async deleteRoleFromUser(userRole: UserRoleDto): Promise<void> {
+    if (this.service.isNoSql()) {
+      const existUserRole = await this.service.noSql.userRoleNoSql.findFirst({
+        where: {
+          role_id: userRole.role_id,
+          user_id: userRole.user_id,
+          uuid: userRole.uuid,
+        },
+      });
+      if (existUserRole) {
+        await this.service.noSql.userRoleNoSql.delete({
+          where: {
+            id: existUserRole.id,
+          },
+        });
+        return;
+      } else {
+        throw new NotFoundException("User role not found");
+      }
+    }
+
+    await this.service.sql.userRoleSql.delete({
+      where: {
+        role_user_id: {
+          user_id: Number(userRole.user_id),
+          role_id: Number(userRole.role_id),
+          uuid: userRole.uuid,
         },
       },
     });

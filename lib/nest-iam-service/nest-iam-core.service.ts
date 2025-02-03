@@ -753,12 +753,6 @@ export class NestIamCoreService {
       return this.service.noSql.userNoSql.create({
         data: {
           username: user.username,
-          roles: {
-            create: {
-              role_id: user.role,
-              uuid: user.uuid,
-            },
-          },
         },
       });
     }
@@ -767,12 +761,6 @@ export class NestIamCoreService {
       .create({
         data: {
           username: user.username,
-          roles: {
-            create: {
-              role_id: Number(user.role),
-              uuid: user.uuid,
-            },
-          },
         },
       })
       .then((res) => {

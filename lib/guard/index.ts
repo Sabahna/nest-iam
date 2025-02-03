@@ -1,1 +1,1 @@
-export * from "./public.metadata";
+export * from "./metadata";

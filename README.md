@@ -1,5 +1,7 @@
 # Nest IAM
 
+## Installation
+
 Install `cookieParser`
 
 ```sh
@@ -46,6 +48,13 @@ After requesting the token
   }
 ```
 
+Next, use the global exception filter to catch the error
+
+```ts
+const app = await NestFactory.create<NestExpressApplication>(AppModule);
+app.use(new NestIAMExceptionFilter());
+```
+
 ### For Mongodb
 
 - Need Replication
@@ -61,3 +70,15 @@ DB_URL="postgresql://nestiam:nestiam@localhost:5432/nestiam" yarn --cwd ./node_m
 **Important Note For Remove Permission From Role:** The related child permission of the removal permission may also be linked to other remaining permissions in the role, ensure that you properly verify dependencies before removal.
 
 To handle this correctly, use the provided methods in your project to locate and remove each permission individually.
+
+## User Roles and UUID Management
+
+### Overview
+
+A user can have multiple roles within a unique UUID, which may represent an organization, company, or group. If a user belongs to multiple organizations, companies, or groups, roles should be created and associated with these entities using UUIDs.
+
+### Key Concepts
+
+- UUID (Universally Unique Identifier): Each organization, company, or group is identified by a unique UUID.
+- User Roles: A user can have multiple roles within a single UUID.
+- Multiple Organizations: If a user is part of multiple organizations, companies, or groups, roles should be created with the associated UUIDs.

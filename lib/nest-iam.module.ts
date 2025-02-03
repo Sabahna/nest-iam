@@ -19,7 +19,7 @@ export class NestIAMModule {
         NestIamService,
         NestIamCoreService,
       ],
-      exports: [NestIamCoreService],
+      exports: [NestIamCoreService, NestIamService],
     };
   }
 }

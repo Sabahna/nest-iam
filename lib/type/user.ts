@@ -1,9 +1,4 @@
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-  OmitType,
-  PartialType,
-} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 import { Prisma } from "../../prisma/generated/client2";
 
@@ -11,14 +6,6 @@ export class CreateUserDto {
   @IsString()
   @ApiProperty({ required: true, type: String, example: "jackwill" })
   username: string;
-
-  @IsString()
-  @ApiProperty({
-    required: true,
-    type: String,
-    example: "1",
-  })
-  role: string;
 
   @IsString()
   @IsOptional()
@@ -33,9 +20,7 @@ export class CreateUserDto {
   uuid: string = "default";
 }
 
-export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ["role"]),
-) {}
+export class UpdateUserDto extends PartialType(CreateUserDto) {}
 
 export class UserRoleDto {
   @IsString()

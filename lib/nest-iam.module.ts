@@ -1,6 +1,6 @@
 import { DynamicModule, Global, Module } from "@nestjs/common";
 import { IAMGuardModule } from "./guard/iam-guard.module";
-import { AppModuleInterface } from "./interface/iam.module.interface";
+import { AppModuleInterface } from "./interface";
 import { NestIamCoreService } from "./nest-iam-service";
 import { NestIamService } from "./nest-iam-service/nest-iam.service";
 

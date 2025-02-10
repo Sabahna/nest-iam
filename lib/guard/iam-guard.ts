@@ -35,6 +35,7 @@ export function checkPublicState(
   return guard;
 }
 
+// noinspection t
 @Injectable()
 export default class IAMGuard implements CanActivate {
   constructor(
@@ -58,8 +59,10 @@ export default class IAMGuard implements CanActivate {
       //   util.inspect(req, { depth: 2, colors: true }),
       // );
 
-      const token: string | undefined = req.cookies?.jwtToken;
-      const refreshToken: string | undefined = req.cookies?.refreshToken;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const token = req.cookies?.jwtToken as string | undefined;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const refreshToken = req.cookies?.refreshToken as string | undefined;
 
       if (!token || !refreshToken) {
         throw new UnauthorizedException("You are not authenticated.");
@@ -104,6 +107,7 @@ export default class IAMGuard implements CanActivate {
         if (!acc[resource.name]) {
           acc[resource.name] = [];
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         acc[resource.name].push(scope.name);
         return acc;
       }, {});

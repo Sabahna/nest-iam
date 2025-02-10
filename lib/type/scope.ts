@@ -19,6 +19,4 @@ export class CreateScopeDto {
 
 export class UpdateScopeDto extends PartialType(CreateScopeDto) {}
 
-const scope = Prisma.validator<Prisma.ScopeNoSqlDefaultArgs>()({});
-
-export type Scope = Prisma.ScopeNoSqlGetPayload<typeof scope>;
+export type Scope = Prisma.ScopeNoSqlGetPayload<Prisma.ScopeNoSqlDefaultArgs>;

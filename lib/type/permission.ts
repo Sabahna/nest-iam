@@ -1,6 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { IsArray, IsOptional, IsString } from "class-validator";
 import { Prisma } from "../../prisma/generated/client2";
+import { Prisma as SqlPrisma } from "../../prisma/generated/client1";
 
 export class CreatePermissionDto {
   @IsString()
@@ -54,9 +55,8 @@ export class RelatedPermissionDto {
   child_id: string;
 }
 
-const permission = Prisma.validator<Prisma.PermissionNoSqlDefaultArgs>()({});
-
-export type Permission = Prisma.PermissionNoSqlGetPayload<typeof permission>;
+export type Permission =
+  Prisma.PermissionNoSqlGetPayload<Prisma.PermissionNoSqlDefaultArgs>;
 
 export type PermissionList = Array<{
   id: string;
@@ -89,4 +89,29 @@ export type PermissionList = Array<{
       desc: string | null;
     };
   }[];
+}>;
+
+export type PermissionSQL = SqlPrisma.PermissionSqlGetPayload<{
+  select: {
+    id: true;
+    title: true;
+    name: true;
+    desc: true;
+    scope: true;
+    resource: true;
+    children: {
+      select: {
+        child: {
+          select: {
+            id: true;
+            title: true;
+            name: true;
+            desc: true;
+            resource: true;
+            scope: true;
+          };
+        };
+      };
+    };
+  };
 }>;

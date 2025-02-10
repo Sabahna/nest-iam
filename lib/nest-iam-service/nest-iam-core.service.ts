@@ -9,6 +9,7 @@ import {
   CreatePermissionDto,
   Permission,
   PermissionList,
+  PermissionSQL,
   RelatedPermissionDto,
   UpdatePermissionDto,
 } from "../type/permission";
@@ -22,6 +23,7 @@ import {
   PermissionRoleDto,
   Role,
   RoleList,
+  RoleSQL,
   UpdateRoleDto,
 } from "../type/role";
 import { CreateScopeDto, Scope, UpdateScopeDto } from "../type/scope";
@@ -77,6 +79,8 @@ type RoleGetPayload = {
   name: string;
   desc: string | null;
   uuid: string;
+  created_at: Date;
+  updated_at: Date;
   permission_roles: Array<{
     permission: {
       id: string;
@@ -117,7 +121,7 @@ export class NestIamCoreService {
       return this.service.noSql.scopeNoSql.findMany();
     }
     return this.service.sql.scopeSql.findMany().then((res) => {
-      return res.map(convertNosqlFormat);
+      return res.map((data) => convertNosqlFormat(data));
     });
   }
 
@@ -164,7 +168,7 @@ export class NestIamCoreService {
       return this.service.noSql.resourceNoSql.findMany();
     }
     return this.service.sql.resourceSql.findMany().then((res) => {
-      return res.map(convertNosqlFormat);
+      return res.map((data) => convertNosqlFormat(data));
     });
   }
 
@@ -196,9 +200,9 @@ export class NestIamCoreService {
       });
   }
 
-  private async permissionToNoSql(
-    permissions: any,
-  ): Promise<PermissionGetPayload> {
+  private permissionToNoSql(
+    permissions: PermissionSQL[],
+  ): PermissionGetPayload {
     return permissions.map((data) => {
       return {
         ...data,
@@ -431,7 +435,15 @@ export class NestIamCoreService {
     });
   }
 
-  private async roleToNoSql(roles: any): Promise<RoleGetPayload[]> {
+  private roleToNoSql(roles: RoleSQL[]): {
+    id: string;
+    name: string;
+    desc: string | null;
+    uuid: string;
+    created_at: Date;
+    updated_at: Date;
+    permission_roles: any;
+  }[] {
     return roles.map((data) => {
       return {
         ...data,
@@ -611,9 +623,9 @@ export class NestIamCoreService {
             },
           },
         })
-        .then(async (res) => {
+        .then((res) => {
           if (res) {
-            return (await this.roleToNoSql([res]))[0];
+            return this.roleToNoSql([res])[0];
           }
           return null;
         });

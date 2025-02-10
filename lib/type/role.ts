@@ -1,6 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { Prisma } from "../../prisma/generated/client2";
+import { Prisma as PrismaSql } from "../../prisma/generated/client1";
 
 export class CreateRoleDto {
   @IsString()
@@ -59,9 +60,7 @@ export class PermissionRoleDto {
   permission_id: string;
 }
 
-const role = Prisma.validator<Prisma.RoleNoSqlDefaultArgs>()({});
-
-export type Role = Prisma.RoleNoSqlGetPayload<typeof role>;
+export type Role = Prisma.RoleNoSqlGetPayload<Prisma.RoleNoSqlDefaultArgs>;
 
 export type RoleList = {
   id: string;
@@ -85,3 +84,22 @@ export type RoleList = {
     };
   }>;
 };
+
+export type RoleSQL = PrismaSql.RoleSqlGetPayload<{
+  include: {
+    permission_roles: {
+      select: {
+        permission: {
+          select: {
+            id: true;
+            title: true;
+            name: true;
+            desc: true;
+            resource: true;
+            scope: true;
+          };
+        };
+      };
+    };
+  };
+}>;

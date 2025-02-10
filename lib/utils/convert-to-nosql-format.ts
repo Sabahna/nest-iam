@@ -1,3 +1,7 @@
-export const convertNosqlFormat = (response: any) => {
-  return { ...response, id: response.id.toString() };
+export const convertNosqlFormat = <T>(response: object): T => {
+  if (response["id"]) {
+    return { ...response, id: String(response["id"]) } as T;
+  } else {
+    throw new Error("Invalid response");
+  }
 };

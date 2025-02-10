@@ -45,12 +45,8 @@ export class UserRoleDto {
   uuid: string = "default";
 }
 
-const user = Prisma.validator<Prisma.UserNoSqlDefaultArgs>()({});
+export type User = Prisma.UserNoSqlGetPayload<Prisma.UserNoSqlDefaultArgs>;
 
-export type User = Prisma.UserNoSqlGetPayload<typeof user>;
-
-const userList = Prisma.validator<Prisma.UserNoSqlDefaultArgs>()({
-  include: { roles: { select: { role: true, uuid: true } } },
-});
-
-export type UserList = Prisma.UserNoSqlGetPayload<typeof userList>;
+export type UserList = Prisma.UserNoSqlGetPayload<{
+  include: { roles: { select: { role: true; uuid: true } } };
+}>;

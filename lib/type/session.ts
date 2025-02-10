@@ -21,6 +21,4 @@ export class UpdateSessionDto {
   refresh_token: string;
 }
 
-const scope = Prisma.validator<Prisma.ScopeNoSqlDefaultArgs>()({});
-
-export type Scope = Prisma.ScopeNoSqlGetPayload<typeof scope>;
+export type Scope = Prisma.ScopeNoSqlGetPayload<Prisma.ScopeNoSqlDefaultArgs>;

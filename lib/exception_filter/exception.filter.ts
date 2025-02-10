@@ -7,6 +7,7 @@ export class NestIAMExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
     return response.status(exception.getStatus()).json(exception.getResponse());
   }
 }

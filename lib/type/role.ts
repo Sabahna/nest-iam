@@ -85,6 +85,10 @@ export type RoleList = {
   }>;
 };
 
+export type RoleListWithUser = RoleList & {
+  users: Array<{ id: string; username: string }>;
+};
+
 export type RoleSQL = PrismaSql.RoleSqlGetPayload<{
   include: {
     permission_roles: {

@@ -23,6 +23,7 @@ import {
   PermissionRoleDto,
   Role,
   RoleList,
+  RoleListWithUser,
   RoleSQL,
   UpdateRoleDto,
 } from "../type/role";
@@ -598,8 +599,12 @@ export class NestIamCoreService {
     });
   }
 
-  async getRoleById(id: string, uuid?: string): Promise<RoleList> {
-    let data: RoleGetPayload | null = null;
+  async getRoleById(id: string, uuid?: string): Promise<RoleListWithUser> {
+    let data:
+      | (RoleGetPayload & {
+          users: Array<{ user: { id: string; username: string } }>;
+        })
+      | null = null;
     if (this.service.isNoSql()) {
       data = await this.service.noSql.roleNoSql.findUnique({
         where: { id: id, uuid: uuid },
@@ -618,6 +623,7 @@ export class NestIamCoreService {
               },
             },
           },
+          users: { select: { user: { select: { id: true, username: true } } } },
         },
       });
     } else {
@@ -639,11 +645,24 @@ export class NestIamCoreService {
                 },
               },
             },
+            users: {
+              select: { user: { select: { id: true, username: true } } },
+            },
           },
         })
         .then((res) => {
           if (res) {
-            return this.roleToNoSql([res])[0];
+            return {
+              ...this.roleToNoSql([res])[0],
+              users: res.users.map((user) => {
+                return {
+                  user: {
+                    id: user.user.id.toString(),
+                    username: user.user.username,
+                  },
+                };
+              }),
+            };
           }
           return null;
         });
@@ -661,6 +680,7 @@ export class NestIamCoreService {
       permissions: data.permission_roles.map(
         (permission) => permission.permission,
       ),
+      users: data.users.map((user) => user.user),
     };
   }
 
@@ -684,8 +704,7 @@ export class NestIamCoreService {
 
   async deleteRole(id: string): Promise<Role> {
     // Remove old session
-    //TODO delete by role
-    await this.deleteAllSession();
+    await this.deleteSessionsByRole(id);
 
     if (this.service.isNoSql()) {
       return this.service.noSql.roleNoSql.delete({ where: { id: id } });
@@ -720,8 +739,7 @@ export class NestIamCoreService {
     );
 
     // Remove old session
-    //TODO delete by role
-    await this.deleteAllSession();
+    await this.deleteSessionsByRole(permissionRole.role_id);
 
     if (this.service.isNoSql()) {
       await Promise.all(
@@ -761,8 +779,7 @@ export class NestIamCoreService {
     permissionRole: PermissionRoleDto,
   ): Promise<void> {
     // Remove old session
-    //TODO delete by role
-    await this.deleteAllSession();
+    await this.deleteSessionsByRole(permissionRole.role_id);
 
     if (this.service.isNoSql()) {
       const role = await this.service.noSql.permissionRoleNoSql.findFirst({
@@ -1131,17 +1148,13 @@ export class NestIamCoreService {
     });
   }
 
-  // async deleteSessionsByRole(roleId: string) {
-  //   if (this.service.isNoSql()) {
-  //     await this.service.noSql.userSessionNoSql.deleteMany({
-  //       where: { role_id: roleId },
-  //     });
-  //   } else {
-  //     await this.service.sql.userSessionSql.deleteMany({
-  //       where: { id: Number(roleId) },
-  //     });
-  //   }
-  // }
+  async deleteSessionsByRole(roleId: string) {
+    const users = (await this.getRoleById(roleId)).users;
+
+    await Promise.allSettled(
+      users.map((user) => this.deleteSessionsByUser(user.id)),
+    );
+  }
 
   async deleteAllSession() {
     if (this.service.isNoSql()) {

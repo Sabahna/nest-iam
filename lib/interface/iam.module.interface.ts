@@ -1,11 +1,5 @@
 export class AppModuleInterface {
-  provider:
-    | "postgresql"
-    | "mysql"
-    | "sqlite"
-    | "sqlserver"
-    | "mongodb"
-    | "cockroachdb";
+  provider: ProviderType;
   url: string;
   tokenExpiredTime: number;
   refreshTokenExpiredTime: number;
@@ -14,3 +8,11 @@ export class AppModuleInterface {
   tokenExpiredMessage?: string;
   tokenInvalidMessage?: string;
 }
+
+export type ProviderType =
+  | "postgresql"
+  | "mysql"
+  | "sqlite"
+  | "sqlserver"
+  | "mongodb"
+  | "cockroachdb";

@@ -1042,4 +1042,51 @@ export class NestIamCoreService {
 
     return { token, refreshToken };
   }
+
+  async checkSession(sessionId: string) {
+    let count: number;
+    if (this.service.isNoSql()) {
+      count = await this.service.noSql.userSessionNoSql.count({
+        where: { id: sessionId },
+      });
+    } else {
+      count = await this.service.sql.userSessionSql.count({
+        where: { id: Number(sessionId) },
+      });
+    }
+
+    return count > 0;
+  }
+
+  async deleteSessionsByUser(userId: string) {
+    if (this.service.isNoSql()) {
+      await this.service.noSql.userSessionNoSql.deleteMany({
+        where: { user_id: userId },
+      });
+    } else {
+      await this.service.sql.userSessionSql.deleteMany({
+        where: { id: Number(userId) },
+      });
+    }
+  }
+
+  // async deleteSessionsByRole(roleId: string) {
+  //   if (this.service.isNoSql()) {
+  //     await this.service.noSql.userSessionNoSql.deleteMany({
+  //       where: { role_id: roleId },
+  //     });
+  //   } else {
+  //     await this.service.sql.userSessionSql.deleteMany({
+  //       where: { id: Number(roleId) },
+  //     });
+  //   }
+  // }
+
+  async deleteAllSession() {
+    if (this.service.isNoSql()) {
+      await this.service.noSql.userSessionNoSql.deleteMany();
+    } else {
+      await this.service.sql.userSessionSql.deleteMany();
+    }
+  }
 }

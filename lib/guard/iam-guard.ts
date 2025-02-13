@@ -91,6 +91,18 @@ export default class IAMGuard implements CanActivate {
         invalidMessage: this.service.configMaps.tokenInvalidMessage,
       }) as { sid: string; uid: string };
 
+      // Pass if allow any roles
+      if (scope.allowAnyRoles) {
+        return true;
+      }
+
+      const validSession = await this.coreService.checkSession(
+        verificationToken.sid,
+      );
+      if (!validSession) {
+        throw new UnauthorizedException("Invalid session!");
+      }
+
       const uuid = scope.uuid?.(req);
 
       const userRole = (

@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepare": "nest build && make generate",
+    "postinstall": "nest build && make generate",
     "build": "nest build",
     "db-push": "DATABASE_URL=$DB_URL yarn prisma db push --schema=prisma/schema.prisma",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

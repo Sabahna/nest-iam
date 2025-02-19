@@ -610,12 +610,17 @@ export class NestIamCoreService {
     });
   }
 
-  async getRoleById(id: string, uuid?: string): Promise<RoleListWithUser> {
+  async getRoleById(id?: string, uuid?: string): Promise<RoleListWithUser> {
     let data:
       | (RoleGetPayload & {
           users: Array<{ user: { id: string; username: string } }>;
         })
       | null = null;
+
+    if (!id && !uuid) {
+      throw new BadRequestException("Id or uuid is required");
+    }
+
     if (this.service.isNoSql()) {
       data = await this.service.noSql.roleNoSql.findUnique({
         where: { id: id, uuid: uuid },

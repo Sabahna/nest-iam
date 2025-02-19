@@ -4,6 +4,11 @@ import { Prisma } from "../../prisma/generated/client2";
 import { Prisma as PrismaSql } from "../../prisma/generated/client1";
 
 export class CreateRoleDto {
+  constructor() {
+    this.uuid = "default";
+    this.permissions = [];
+  }
+
   @IsString()
   @ApiProperty({ required: true, type: String, example: "Admin" })
   name: string;

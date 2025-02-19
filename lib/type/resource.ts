@@ -12,7 +12,7 @@ export class CreateResourceDto {
   @ApiProperty({
     required: false,
     type: String,
-    example: "Recource for organization member",
+    example: "Resource for organization member",
   })
   desc?: string;
 }

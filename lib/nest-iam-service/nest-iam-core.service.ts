@@ -237,6 +237,10 @@ export class NestIamCoreService {
   }
 
   async createPermission(permission: CreatePermissionDto): Promise<Permission> {
+    if (!permission.related_permissions) {
+      permission.related_permissions = [];
+    }
+
     if (this.service.isNoSql()) {
       return this.service.noSql.permissionNoSql.create({
         data: {
@@ -504,6 +508,13 @@ export class NestIamCoreService {
   }
 
   async createRole(role: CreateRoleDto): Promise<Role> {
+    if (!role.uuid) {
+      role.uuid = "default";
+    }
+    if (!role.permissions) {
+      role.permissions = [];
+    }
+
     role.permissions = await this.prepareRolePermissions(role.permissions);
 
     if (this.service.isNoSql()) {

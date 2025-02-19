@@ -4,6 +4,10 @@ import { Prisma } from "../../prisma/generated/client2";
 import { Prisma as SqlPrisma } from "../../prisma/generated/client1";
 
 export class CreatePermissionDto {
+  constructor() {
+    this.related_permissions = [];
+  }
+
   @IsString()
   @IsOptional()
   @ApiProperty({

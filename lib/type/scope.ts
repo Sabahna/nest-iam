@@ -19,4 +19,5 @@ export class CreateScopeDto {
 
 export class UpdateScopeDto extends PartialType(CreateScopeDto) {}
 
-export type Scope = Prisma.ScopeNoSqlGetPayload<Prisma.ScopeNoSqlDefaultArgs>;
+export type ScopeType =
+  Prisma.ScopeNoSqlGetPayload<Prisma.ScopeNoSqlDefaultArgs>;

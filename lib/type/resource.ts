@@ -19,5 +19,5 @@ export class CreateResourceDto {
 
 export class UpdateResourceDto extends PartialType(CreateResourceDto) {}
 
-export type Resource =
+export type ResourceType =
   Prisma.ResourceNoSqlGetPayload<Prisma.ResourceNoSqlDefaultArgs>;

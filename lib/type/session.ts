@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsString } from "class-validator";
-import { Prisma } from "../../prisma/generated/client2";
 
 export class CreateSessionDto {
   @IsString()
@@ -20,5 +19,3 @@ export class UpdateSessionDto {
   })
   refresh_token: string;
 }
-
-export type Scope = Prisma.ScopeNoSqlGetPayload<Prisma.ScopeNoSqlDefaultArgs>;

@@ -7,34 +7,34 @@ import {
 } from "@nestjs/common";
 import {
   CreatePermissionDto,
-  Permission,
   PermissionList,
   PermissionSQL,
+  PermissionType,
   RelatedPermissionDto,
   UpdatePermissionDto,
 } from "../type/permission";
 import {
   CreateResourceDto,
-  Resource,
+  ResourceType,
   UpdateResourceDto,
 } from "../type/resource";
 import {
   CreateRoleDto,
   PermissionRoleDto,
-  Role,
   RoleList,
   RoleListWithUser,
   RoleSQL,
+  RoleType,
   UpdateRoleDto,
 } from "../type/role";
-import { CreateScopeDto, Scope, UpdateScopeDto } from "../type/scope";
+import { CreateScopeDto, ScopeType, UpdateScopeDto } from "../type/scope";
 import { CreateSessionDto, UpdateSessionDto } from "../type/session";
 import {
   CreateUserDto,
   UpdateUserDto,
-  User,
   UserList,
   UserRoleDto,
+  UserType,
 } from "../type/user";
 import { convertNosqlFormat } from "../utils/convert-to-nosql-format";
 import { generateToken, verifyToken } from "./access.token";
@@ -107,7 +107,7 @@ type RoleGetPayload = {
 export class NestIamCoreService {
   constructor(@Inject() private service: NestIamService) {}
 
-  async createScope(scope: CreateScopeDto): Promise<Scope> {
+  async createScope(scope: CreateScopeDto): Promise<ScopeType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.scopeNoSql.create({ data: scope });
     }
@@ -117,7 +117,7 @@ export class NestIamCoreService {
     });
   }
 
-  async getScopes(): Promise<Scope[]> {
+  async getScopes(): Promise<ScopeType[]> {
     if (this.service.isNoSql()) {
       return this.service.noSql.scopeNoSql.findMany();
     }
@@ -126,7 +126,7 @@ export class NestIamCoreService {
     });
   }
 
-  async updateScope(id: string, scope: UpdateScopeDto): Promise<Scope> {
+  async updateScope(id: string, scope: UpdateScopeDto): Promise<ScopeType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.scopeNoSql.update({
         where: { id: id },
@@ -141,7 +141,7 @@ export class NestIamCoreService {
       });
   }
 
-  async deleteScope(id: string): Promise<Scope> {
+  async deleteScope(id: string): Promise<ScopeType> {
     // Remove old session
     await this.deleteAllSession();
 
@@ -155,7 +155,7 @@ export class NestIamCoreService {
       });
   }
 
-  async createResource(resource: CreateResourceDto): Promise<Resource> {
+  async createResource(resource: CreateResourceDto): Promise<ResourceType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.resourceNoSql.create({ data: resource });
     }
@@ -167,7 +167,7 @@ export class NestIamCoreService {
       });
   }
 
-  async getResources(): Promise<Resource[]> {
+  async getResources(): Promise<ResourceType[]> {
     if (this.service.isNoSql()) {
       return this.service.noSql.resourceNoSql.findMany();
     }
@@ -179,7 +179,7 @@ export class NestIamCoreService {
   async updateResource(
     id: string,
     resource: UpdateResourceDto,
-  ): Promise<Resource> {
+  ): Promise<ResourceType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.resourceNoSql.update({
         where: { id: id },
@@ -193,7 +193,7 @@ export class NestIamCoreService {
       });
   }
 
-  async deleteResource(id: string): Promise<Resource> {
+  async deleteResource(id: string): Promise<ResourceType> {
     // Remove old session
     await this.deleteAllSession();
 
@@ -236,7 +236,9 @@ export class NestIamCoreService {
     });
   }
 
-  async createPermission(permission: CreatePermissionDto): Promise<Permission> {
+  async createPermission(
+    permission: CreatePermissionDto,
+  ): Promise<PermissionType> {
     if (!permission.related_permissions) {
       permission.related_permissions = [];
     }
@@ -352,7 +354,7 @@ export class NestIamCoreService {
   async updatePermission(
     id: string,
     permission: UpdatePermissionDto,
-  ): Promise<Permission> {
+  ): Promise<PermissionType> {
     // Remove old session
     await this.deleteAllSession();
 
@@ -382,7 +384,7 @@ export class NestIamCoreService {
       });
   }
 
-  async deletePermission(id: string): Promise<Permission> {
+  async deletePermission(id: string): Promise<PermissionType> {
     // Remove old session
     await this.deleteAllSession();
 
@@ -507,7 +509,7 @@ export class NestIamCoreService {
     return Array.from(setAllPermissions);
   }
 
-  async createRole(role: CreateRoleDto): Promise<Role> {
+  async createRole(role: CreateRoleDto): Promise<RoleType> {
     if (!role.uuid) {
       role.uuid = "default";
     }
@@ -700,7 +702,7 @@ export class NestIamCoreService {
     };
   }
 
-  async updateRole(id: string, role: UpdateRoleDto): Promise<Role> {
+  async updateRole(id: string, role: UpdateRoleDto): Promise<RoleType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.roleNoSql.update({
         where: { id: id },
@@ -718,7 +720,7 @@ export class NestIamCoreService {
       });
   }
 
-  async deleteRole(id: string): Promise<Role> {
+  async deleteRole(id: string): Promise<RoleType> {
     // Remove old session
     await this.deleteSessionsByRole(id);
 
@@ -823,7 +825,7 @@ export class NestIamCoreService {
     });
   }
 
-  async createUser(user: CreateUserDto): Promise<User> {
+  async createUser(user: CreateUserDto): Promise<UserType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.userNoSql.create({
         data: {
@@ -908,7 +910,7 @@ export class NestIamCoreService {
       });
   }
 
-  async updateUser(id: string, user: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, user: UpdateUserDto): Promise<UserType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.userNoSql.update({
         where: { id: id },
@@ -926,7 +928,7 @@ export class NestIamCoreService {
       });
   }
 
-  async deleteUser(id: string): Promise<User> {
+  async deleteUser(id: string): Promise<UserType> {
     if (this.service.isNoSql()) {
       return this.service.noSql.userNoSql.delete({
         where: { id: id },

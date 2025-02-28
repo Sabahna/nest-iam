@@ -1,7 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { IsArray, IsOptional, IsString } from "class-validator";
-import { Prisma } from "../../prisma/generated/client2";
 import { Prisma as SqlPrisma } from "../../prisma/generated/client1";
+import { Prisma } from "../../prisma/generated/client2";
 
 export class CreatePermissionDto {
   constructor() {
@@ -59,7 +59,7 @@ export class RelatedPermissionDto {
   child_id: string;
 }
 
-export type Permission =
+export type PermissionType =
   Prisma.PermissionNoSqlGetPayload<Prisma.PermissionNoSqlDefaultArgs>;
 
 export type PermissionList = Array<{

@@ -1,7 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
-import { Prisma } from "../../prisma/generated/client2";
 import { Prisma as PrismaSql } from "../../prisma/generated/client1";
+import { Prisma } from "../../prisma/generated/client2";
 
 export class CreateRoleDto {
   constructor() {
@@ -65,7 +65,7 @@ export class PermissionRoleDto {
   permission_id: string;
 }
 
-export type Role = Prisma.RoleNoSqlGetPayload<Prisma.RoleNoSqlDefaultArgs>;
+export type RoleType = Prisma.RoleNoSqlGetPayload<Prisma.RoleNoSqlDefaultArgs>;
 
 export type RoleList = {
   id: string;

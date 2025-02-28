@@ -45,7 +45,7 @@ export class UserRoleDto {
   uuid: string = "default";
 }
 
-export type User = Prisma.UserNoSqlGetPayload<Prisma.UserNoSqlDefaultArgs>;
+export type UserType = Prisma.UserNoSqlGetPayload<Prisma.UserNoSqlDefaultArgs>;
 
 export type UserList = Prisma.UserNoSqlGetPayload<{
   include: { roles: { select: { role: true; uuid: true } } };

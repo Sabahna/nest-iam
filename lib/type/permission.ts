@@ -1,4 +1,5 @@
-import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
+import { OmitType, PartialType } from "@nestjs/mapped-types";
+import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsOptional, IsString } from "class-validator";
 import { Prisma as SqlPrisma } from "../../prisma/generated/client1";
 import { Prisma } from "../../prisma/generated/client2";

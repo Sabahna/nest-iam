@@ -1,10 +1,11 @@
 import { UnauthorizedException } from "@nestjs/common";
 import * as jwt from "jsonwebtoken";
+import type { StringValue } from "ms";
 
 export const generateToken = (
   jwtSecretKey: string,
   data: object,
-  expires = "30d",
+  expires: StringValue = "30d",
 ): string => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return
   return jwt.sign(data, jwtSecretKey, {

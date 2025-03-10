@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import type { StringValue } from "ms";
 import {
   CreatePermissionDto,
   PermissionList,
@@ -1039,12 +1040,12 @@ export class NestIamCoreService {
     const token = generateToken(
       this.service.configMaps.secret,
       { sid: sessionId, uid: userId },
-      tokenExpiredIn,
+      tokenExpiredIn as StringValue,
     );
     const refreshToken = generateToken(
       this.service.configMaps.secret,
       { sid: sessionId, uid: userId },
-      refreshTokenExpiredIn,
+      refreshTokenExpiredIn as StringValue,
     );
 
     return { token, refreshToken };

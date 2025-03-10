@@ -846,19 +846,24 @@ export class NestIamCoreService {
       });
   }
 
-  async isExistUser(username: string) {
-    let count: number;
+  async isExistUser(username: string): Promise<UserType | null> {
     if (this.service.isNoSql()) {
-      count = await this.service.noSql.userNoSql.count({
-        where: { username: username },
-      });
-    } else {
-      count = await this.service.sql.userSql.count({
+      console.log("isExistUser method");
+      return this.service.noSql.userNoSql.findFirst({
         where: { username: username },
       });
     }
 
-    return count > 0;
+    return this.service.sql.userSql
+      .findFirst({
+        where: { username: username },
+      })
+      .then((res) => {
+        if (res) {
+          return convertNosqlFormat(res);
+        }
+        return null;
+      });
   }
 
   async getUsers(): Promise<UserList[]> {
@@ -1074,13 +1079,13 @@ export class NestIamCoreService {
           data: session,
         })
       ).id;
+    } else {
+      sessionId = (
+        await this.service.sql.userSessionSql.create({
+          data: { user_id: Number(session.user_id) },
+        })
+      ).id.toString();
     }
-
-    sessionId = (
-      await this.service.sql.userSessionSql.create({
-        data: { user_id: Number(session.user_id) },
-      })
-    ).id.toString();
 
     const { token, refreshToken } = this.tokenGenerator(
       sessionId,

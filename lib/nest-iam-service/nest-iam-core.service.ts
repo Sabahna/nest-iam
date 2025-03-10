@@ -846,6 +846,21 @@ export class NestIamCoreService {
       });
   }
 
+  async isExistUser(username: string) {
+    let count: number;
+    if (this.service.isNoSql()) {
+      count = await this.service.noSql.userNoSql.count({
+        where: { username: username },
+      });
+    } else {
+      count = await this.service.sql.userSql.count({
+        where: { username: username },
+      });
+    }
+
+    return count > 0;
+  }
+
   async getUsers(): Promise<UserList[]> {
     if (this.service.isNoSql()) {
       return this.service.noSql.userNoSql.findMany({

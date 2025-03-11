@@ -68,12 +68,15 @@ export default class IAMGuard implements CanActivate {
         throw new UnauthorizedException("You are not authenticated.");
       }
 
-      const resource: null | string = this.reflector.get(
+      let resource: null | string = this.reflector.get(
         "resource",
-        context.getClass(),
+        context.getHandler(),
       );
       if (resource == null) {
-        throw new InternalServerErrorException("Resource Not Found");
+        resource = this.reflector.get("resource", context.getClass());
+        if (resource == null) {
+          throw new InternalServerErrorException("Resource Not Found");
+        }
       }
 
       const scope: null | ScopeOptions = this.reflector.get(
@@ -91,16 +94,16 @@ export default class IAMGuard implements CanActivate {
         invalidMessage: this.service.configMaps.tokenInvalidMessage,
       }) as { sid: string; uid: string };
 
-      // Pass if allow any roles
-      if (scope.allowAnyRoles) {
-        return true;
-      }
-
       const validSession = await this.coreService.checkSession(
         verificationToken.sid,
       );
       if (!validSession) {
         throw new UnauthorizedException("Invalid session!");
+      }
+
+      // Pass if allow any roles
+      if (scope.allowAnyRoles) {
+        return true;
       }
 
       const uuid = scope.uuid?.(req);

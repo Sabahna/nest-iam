@@ -3,7 +3,7 @@ import { Request } from "express";
 
 export type ScopeOptions = {
   name: string;
-  uuid?: (req: Request) => string;
+  uuid?: (req: Request) => string | undefined;
   allowAnyRoles?: boolean;
 };
 

@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { JsonObject, JsonValue } from "@prisma/client/runtime/library";
 import type { StringValue } from "ms";
 import {
   CreatePermissionDto,
@@ -101,6 +102,7 @@ type RoleGetPayload = {
       };
     };
   }>;
+  options: JsonValue | null;
 };
 
 @Global()
@@ -469,11 +471,13 @@ export class NestIamCoreService {
     created_at: Date;
     updated_at: Date;
     permission_roles: any;
+    options: JsonValue | null;
   }[] {
     return roles.map((data) => {
       return {
         ...data,
         id: data.id.toString(),
+        options: data.options,
         permission_roles: data.permission_roles.map((permission) => {
           return {
             permission: {
@@ -531,6 +535,7 @@ export class NestIamCoreService {
               permission_id: id,
             })),
           },
+          options: role.options,
         },
       });
     }
@@ -546,6 +551,7 @@ export class NestIamCoreService {
               permission_id: Number(id),
             })),
           },
+          options: role.options,
         },
       })
       .then((res) => {
@@ -609,6 +615,7 @@ export class NestIamCoreService {
         permissions: data.permission_roles.map(
           (permission) => permission.permission,
         ),
+        options: data.options as JsonObject | null,
       }; // Flattening the children structure
     });
   }
@@ -700,6 +707,7 @@ export class NestIamCoreService {
         (permission) => permission.permission,
       ),
       users: data.users.map((user) => user.user),
+      options: data.options as JsonObject | null,
     };
   }
 

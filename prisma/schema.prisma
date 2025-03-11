@@ -67,6 +67,7 @@ model RoleSql {
   name             String
   desc             String?
   uuid             String
+  options          Json?
   permission_roles PermissionRoleSql[]
   users            UserRoleSql[]
   created_at       DateTime            @default(now())

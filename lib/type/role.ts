@@ -1,6 +1,13 @@
 import { OmitType, PartialType } from "@nestjs/mapped-types";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { JsonObject } from "@prisma/client/runtime/library";
+import {
+  IsArray,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+} from "class-validator";
 import { Prisma as PrismaSql } from "../../prisma/generated/client1";
 import { Prisma } from "../../prisma/generated/client2";
 
@@ -46,6 +53,16 @@ export class CreateRoleDto {
     description: "List of parent permission id",
   })
   permissions: string[];
+
+  @IsObject()
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: Object,
+    example: {},
+    default: {},
+    description: "Options for role",
+  })
+  options?: object;
 }
 
 export class UpdateRoleDto extends PartialType(
@@ -89,6 +106,7 @@ export type RoleList = {
       desc: string | null;
     };
   }>;
+  options: JsonObject | null;
 };
 
 export type RoleListWithUser = RoleList & {

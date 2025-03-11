@@ -46,6 +46,29 @@ export class UserRoleDto {
   uuid: string = "default";
 }
 
+export class DeleteUserRoleDto {
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ type: String, example: "1" })
+  role_id?: string;
+
+  @IsString()
+  @ApiProperty({
+    required: true,
+    type: String,
+    example: "1",
+  })
+  user_id: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: String,
+    example: "default",
+  })
+  uuid?: string;
+}
+
 export type UserType = Prisma.UserNoSqlGetPayload<Prisma.UserNoSqlDefaultArgs>;
 
 export type UserList = Prisma.UserNoSqlGetPayload<{

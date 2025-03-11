@@ -33,6 +33,7 @@ import { CreateScopeDto, ScopeType, UpdateScopeDto } from "../type/scope";
 import { CreateSessionDto, UpdateSessionDto } from "../type/session";
 import {
   CreateUserDto,
+  DeleteUserRoleDto,
   UpdateUserDto,
   UserList,
   UserRoleDto,
@@ -976,6 +977,7 @@ export class NestIamCoreService {
       const existUserRole = await this.service.noSql.userRoleNoSql.findFirst({
         where: {
           user_id: userRole.user_id,
+          role_id: userRole.role_id,
           uuid: userRole.uuid,
         },
       });
@@ -993,10 +995,13 @@ export class NestIamCoreService {
       return;
     }
 
-    const existUserRole = await this.service.sql.userRoleSql.findFirst({
+    const existUserRole = await this.service.sql.userRoleSql.findUnique({
       where: {
-        user_id: Number(userRole.user_id),
-        uuid: userRole.uuid,
+        role_user_id: {
+          user_id: Number(userRole.user_id),
+          role_id: Number(userRole.role_id),
+          uuid: userRole.uuid,
+        },
       },
     });
     if (existUserRole) {
@@ -1016,46 +1021,32 @@ export class NestIamCoreService {
     });
   }
 
-  async deleteRoleFromUser(userRole: UserRoleDto): Promise<void> {
-    // Remove old session
-    await this.deleteSessionsByUser(userRole.user_id);
-
+  async deleteRoleFromUser(userRole: DeleteUserRoleDto): Promise<void> {
     if (this.service.isNoSql()) {
-      const existUserRole = await this.service.noSql.userRoleNoSql.findFirst({
-        where: {
-          role_id: userRole.role_id,
-          user_id: userRole.user_id,
-          uuid: userRole.uuid,
-        },
-      });
-      if (existUserRole) {
-        await Promise.allSettled([
-          // Remove old session
-          await this.deleteSessionsByUser(userRole.user_id),
+      await Promise.allSettled([
+        // Remove old session
+        await this.deleteSessionsByUser(userRole.user_id),
 
-          await this.service.noSql.userRoleNoSql.delete({
-            where: {
-              id: existUserRole.id,
-            },
-          }),
-        ]);
-        return;
-      } else {
-        throw new NotFoundException("User role not found");
-      }
+        await this.service.noSql.userRoleNoSql.deleteMany({
+          where: {
+            role_id: userRole.role_id,
+            user_id: userRole.user_id,
+            uuid: userRole.uuid,
+          },
+        }),
+      ]);
+      return;
     }
 
     await Promise.allSettled([
       // Remove old session
       await this.deleteSessionsByUser(userRole.user_id),
 
-      await this.service.sql.userRoleSql.delete({
+      await this.service.sql.userRoleSql.deleteMany({
         where: {
-          role_user_id: {
-            user_id: Number(userRole.user_id),
-            role_id: Number(userRole.role_id),
-            uuid: userRole.uuid,
-          },
+          user_id: Number(userRole.user_id),
+          role_id: Number(userRole.role_id),
+          uuid: userRole.uuid,
         },
       }),
     ]);

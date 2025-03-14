@@ -4,8 +4,10 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { JsonObject, JsonValue } from "@prisma/client/runtime/library";
+import { Request } from "express";
 import type { StringValue } from "ms";
 import {
   CreatePermissionDto,
@@ -857,7 +859,6 @@ export class NestIamCoreService {
 
   async isExistUser(username: string): Promise<UserType | null> {
     if (this.service.isNoSql()) {
-      console.log("isExistUser method");
       return this.service.noSql.userNoSql.findFirst({
         where: { username: username },
       });
@@ -1199,5 +1200,22 @@ export class NestIamCoreService {
       return this.service.noSql.userSessionNoSql.deleteMany();
     }
     return this.service.sql.userSessionSql.deleteMany();
+  }
+
+  extractToken(req: Request) {
+    const token = req.cookies?.jwtToken as string | undefined;
+
+    if (!token) {
+      throw new UnauthorizedException("You are not authenticated.");
+    }
+
+    const verificationToken = verifyToken({
+      jwtSecretKey: this.service.configMaps.secret,
+      token: token,
+      expiredMessage: this.service.configMaps.tokenExpiredMessage,
+      invalidMessage: this.service.configMaps.tokenInvalidMessage,
+    }) as { sid: string; uid: string };
+
+    return verificationToken;
   }
 }

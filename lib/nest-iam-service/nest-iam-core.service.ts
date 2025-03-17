@@ -994,8 +994,11 @@ export class NestIamCoreService {
           "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
         );
       }
-      // Remove old session
-      await this.deleteSessionsByUser(userRole.user_id);
+      /*
+      ? Remove old session
+      ? Currently I considered adding role to the user doesn't need to remove old session
+      */
+      // await this.deleteSessionsByUser(userRole.user_id);
 
       await this.service.noSql.userRoleNoSql.create({
         data: userRole,
@@ -1017,8 +1020,11 @@ export class NestIamCoreService {
         "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
       );
     }
-    // Remove old session
-    await this.deleteSessionsByUser(userRole.user_id);
+    /*
+      ? Remove old session
+      ? Currently I considered adding role to the user doesn't need to remove old session
+      */
+    // await this.deleteSessionsByUser(userRole.user_id);
 
     await this.service.sql.userRoleSql.create({
       data: {

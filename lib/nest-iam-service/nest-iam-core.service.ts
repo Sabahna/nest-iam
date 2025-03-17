@@ -876,16 +876,23 @@ export class NestIamCoreService {
       });
   }
 
-  async getUsers(): Promise<UserList[]> {
+  async getUsers(uuid?: string): Promise<UserList[]> {
+    console.log(`uuid is here ${uuid} type ${typeof uuid}`);
     if (this.service.isNoSql()) {
       return this.service.noSql.userNoSql.findMany({
-        include: { roles: { select: { role: true, uuid: true } } },
+        where: uuid ? { roles: { some: { uuid: uuid } } } : {},
+        include: {
+          roles: { select: { role: true, uuid: true } },
+        },
       });
     }
 
     return this.service.sql.userSql
       .findMany({
-        include: { roles: { select: { role: true, uuid: true } } },
+        where: uuid ? { roles: { some: { uuid: uuid } } } : {},
+        include: {
+          roles: { select: { role: true, uuid: true } },
+        },
       })
       .then((res) => {
         return res.map((data) => {

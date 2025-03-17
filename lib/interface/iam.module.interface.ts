@@ -7,6 +7,7 @@ export class AppModuleInterface {
   secret: string;
   tokenExpiredMessage?: string;
   tokenInvalidMessage?: string;
+  allowUndefinedUUID?: boolean;
 }
 
 export type ProviderType =

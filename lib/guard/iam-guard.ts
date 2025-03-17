@@ -108,6 +108,10 @@ export default class IAMGuard implements CanActivate {
 
       const uuid = scope.uuid?.(req);
 
+      if (uuid == undefined && !this.service.configMaps.allowUndefinedUUID) {
+        throw new ForbiddenException("You are not authorized.");
+      }
+
       const userRole = (
         await this.coreService.getUserRole(verificationToken.uid, uuid)
       )?.roles[0];

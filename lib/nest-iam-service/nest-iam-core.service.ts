@@ -1068,7 +1068,7 @@ export class NestIamCoreService {
 
   private tokenGenerator(sessionId: string, userId: string) {
     const tokenExpiredIn = `${this.service.configMaps.tokenExpiredTime}${this.service.configMaps.timeUnit}`;
-    const refreshTokenExpiredIn = `${this.service.configMaps.tokenExpiredTime}${this.service.configMaps.timeUnit}`;
+    const refreshTokenExpiredIn = `${this.service.configMaps.refreshTokenExpiredTime}${this.service.configMaps.timeUnit}`;
 
     const token = generateToken(
       this.service.configMaps.secret,
@@ -1142,9 +1142,24 @@ export class NestIamCoreService {
     // Remove old session
     await this.deleteSessionsByUser(verificationToken.uid);
 
+    let sessionId: string;
+    if (this.service.isNoSql()) {
+      sessionId = (
+        await this.service.noSql.userSessionNoSql.create({
+          data: { user_id: verificationToken.uid },
+        })
+      ).id;
+    } else {
+      sessionId = (
+        await this.service.sql.userSessionSql.create({
+          data: { user_id: Number(verificationToken.uid) },
+        })
+      ).id.toString();
+    }
+
     if (this.service.isNoSql()) {
       await this.service.noSql.userSessionNoSql.update({
-        where: { id: verificationToken.sid },
+        where: { id: sessionId },
         data: {
           token: token,
           refresh_token: refreshToken,
@@ -1152,7 +1167,7 @@ export class NestIamCoreService {
       });
     } else {
       await this.service.sql.userSessionSql.update({
-        where: { id: Number(verificationToken.sid) },
+        where: { id: Number(sessionId) },
         data: {
           token: token,
           refresh_token: refreshToken,

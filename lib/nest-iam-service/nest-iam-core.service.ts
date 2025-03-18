@@ -1134,11 +1134,6 @@ export class NestIamCoreService {
       invalidMessage: this.service.configMaps.tokenInvalidMessage,
     }) as { sid: string; uid: string };
 
-    const { token, refreshToken } = this.tokenGenerator(
-      verificationToken.sid,
-      verificationToken.uid,
-    );
-
     // Remove old session
     await this.deleteSessionsByUser(verificationToken.uid);
 
@@ -1156,6 +1151,11 @@ export class NestIamCoreService {
         })
       ).id.toString();
     }
+
+    const { token, refreshToken } = this.tokenGenerator(
+      sessionId,
+      verificationToken.uid,
+    );
 
     if (this.service.isNoSql()) {
       await this.service.noSql.userSessionNoSql.update({

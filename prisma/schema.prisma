@@ -1,128 +1,129 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated/client1"
+    provider      = "prisma-client-js"
+    output        = "./generated/client1"
+    binaryTargets = ["native", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x", "rhel-openssl-1.0.x", "windows", "darwin"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model ScopeSql {
-  id         Int             @id @default(autoincrement())
-  name       String          @unique
-  desc       String?
-  scopes     PermissionSql[]
-  created_at DateTime        @default(now())
-  updated_at DateTime        @updatedAt
+    id         Int             @id @default(autoincrement())
+    name       String          @unique
+    desc       String?
+    scopes     PermissionSql[]
+    created_at DateTime        @default(now())
+    updated_at DateTime        @updatedAt
 
-  @@index([id])
-  @@map("scope")
+    @@index([id])
+    @@map("scope")
 }
 
 model ResourceSql {
-  id          Int             @id @default(autoincrement())
-  name        String          @unique
-  desc        String?
-  permissions PermissionSql[]
-  created_at  DateTime        @default(now())
-  updated_at  DateTime        @updatedAt
+    id          Int             @id @default(autoincrement())
+    name        String          @unique
+    desc        String?
+    permissions PermissionSql[]
+    created_at  DateTime        @default(now())
+    updated_at  DateTime        @updatedAt
 
-  @@index([id])
-  @@map("resource")
+    @@index([id])
+    @@map("resource")
 }
 
 model PermissionSql {
-  id               Int                    @id @default(autoincrement())
-  title            String?
-  name             String                 @unique
-  desc             String?
-  resource         ResourceSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
-  resource_id      Int
-  scope            ScopeSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
-  scope_id         Int
-  permission_roles PermissionRoleSql[]
-  parent           RelatedPermissionSql[] @relation("children")
-  children         RelatedPermissionSql[] @relation("parent")
-  created_at       DateTime               @default(now())
-  updated_at       DateTime               @updatedAt
+    id               Int                    @id @default(autoincrement())
+    title            String?
+    name             String                 @unique
+    desc             String?
+    resource         ResourceSql            @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+    resource_id      Int
+    scope            ScopeSql               @relation(fields: [scope_id], references: [id], onDelete: Cascade)
+    scope_id         Int
+    permission_roles PermissionRoleSql[]
+    parent           RelatedPermissionSql[] @relation("children")
+    children         RelatedPermissionSql[] @relation("parent")
+    created_at       DateTime               @default(now())
+    updated_at       DateTime               @updatedAt
 
-  @@index([id, resource_id, scope_id])
-  @@map("permission")
+    @@index([id, resource_id, scope_id])
+    @@map("permission")
 }
 
 model RelatedPermissionSql {
-  parent    PermissionSql @relation("parent", fields: [parent_id], references: [id], onDelete: Cascade)
-  parent_id Int
-  child     PermissionSql @relation("children", fields: [child_id], references: [id], onDelete: Cascade)
-  child_id  Int
+    parent    PermissionSql @relation("parent", fields: [parent_id], references: [id], onDelete: Cascade)
+    parent_id Int
+    child     PermissionSql @relation("children", fields: [child_id], references: [id], onDelete: Cascade)
+    child_id  Int
 
-  @@id(name: "related_permission_id", [parent_id, child_id])
-  @@index([parent_id, child_id])
-  @@map("related_permission")
+    @@id(name: "related_permission_id", [parent_id, child_id])
+    @@index([parent_id, child_id])
+    @@map("related_permission")
 }
 
 model RoleSql {
-  id               Int                 @id @default(autoincrement())
-  name             String
-  desc             String?
-  uuid             String
-  options          Json?
-  permission_roles PermissionRoleSql[]
-  users            UserRoleSql[]
-  created_at       DateTime            @default(now())
-  updated_at       DateTime            @updatedAt
+    id               Int                 @id @default(autoincrement())
+    name             String
+    desc             String?
+    uuid             String
+    options          Json?
+    permission_roles PermissionRoleSql[]
+    users            UserRoleSql[]
+    created_at       DateTime            @default(now())
+    updated_at       DateTime            @updatedAt
 
-  @@index([id])
-  @@map("role")
+    @@index([id])
+    @@map("role")
 }
 
 model PermissionRoleSql {
-  permission    PermissionSql @relation(fields: [permission_id], references: [id], onDelete: Cascade)
-  permission_id Int
-  role          RoleSql       @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  role_id       Int
+    permission    PermissionSql @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+    permission_id Int
+    role          RoleSql       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+    role_id       Int
 
-  @@id(name: "permission_role_id", [permission_id, role_id])
-  @@index([permission_id, role_id])
-  @@map("permission_role")
+    @@id(name: "permission_role_id", [permission_id, role_id])
+    @@index([permission_id, role_id])
+    @@map("permission_role")
 }
 
 model UserSql {
-  id       Int              @id @default(autoincrement())
-  username String           @unique
-  roles    UserRoleSql[]
-  sessions UserSessionSql[]
+    id       Int              @id @default(autoincrement())
+    username String           @unique
+    roles    UserRoleSql[]
+    sessions UserSessionSql[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 
-  @@index([id, username])
-  @@map("user")
+    @@index([id, username])
+    @@map("user")
 }
 
 model UserRoleSql {
-  user    UserSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id Int
-  role    RoleSql @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  role_id Int
-  uuid    String
+    user    UserSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user_id Int
+    role    RoleSql @relation(fields: [role_id], references: [id], onDelete: Cascade)
+    role_id Int
+    uuid    String
 
-  @@id(name: "role_user_id", [user_id, role_id, uuid])
-  @@index([user_id, role_id, uuid])
-  @@map("role_user")
+    @@id(name: "role_user_id", [user_id, role_id, uuid])
+    @@index([user_id, role_id, uuid])
+    @@map("role_user")
 }
 
 model UserSessionSql {
-  id            Int     @id @default(autoincrement())
-  token         String?
-  refresh_token String?
-  user_id       Int
-  user          UserSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    id            Int     @id @default(autoincrement())
+    token         String?
+    refresh_token String?
+    user_id       Int
+    user          UserSql @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 
-  @@index([id, user_id])
-  @@map("session")
+    @@index([id, user_id])
+    @@map("session")
 }

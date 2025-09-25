@@ -768,9 +768,6 @@ export class NestIamCoreService {
       (permission) => !existPermissions.includes(permission),
     );
 
-    // Remove old session
-    await this.deleteSessionsByRole(permissionRole.role_id);
-
     if (this.service.isNoSql()) {
       await Promise.all(
         newPermissions.map((permission) => {
@@ -808,8 +805,6 @@ export class NestIamCoreService {
   async deletePermissionFromRole(
     permissionRole: PermissionRoleDto,
   ): Promise<void> {
-    // Remove old session
-    await this.deleteSessionsByRole(permissionRole.role_id);
 
     if (this.service.isNoSql()) {
       const role = await this.service.noSql.permissionRoleNoSql.findFirst({
@@ -994,11 +989,6 @@ export class NestIamCoreService {
           "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
         );
       }
-      /*
-      ? Remove old session
-      ? Currently I considered adding role to the user doesn't need to remove old session
-      */
-      // await this.deleteSessionsByUser(userRole.user_id);
 
       await this.service.noSql.userRoleNoSql.create({
         data: userRole,
@@ -1020,11 +1010,6 @@ export class NestIamCoreService {
         "User doesn't allow duplicate role for each unique uuid. Add role with different uuid.",
       );
     }
-    /*
-      ? Remove old session
-      ? Currently I considered adding role to the user doesn't need to remove old session
-      */
-    // await this.deleteSessionsByUser(userRole.user_id);
 
     await this.service.sql.userRoleSql.create({
       data: {
@@ -1038,9 +1023,6 @@ export class NestIamCoreService {
   async deleteRoleFromUser(userRole: DeleteUserRoleDto): Promise<void> {
     if (this.service.isNoSql()) {
       await Promise.allSettled([
-        // Remove old session
-        await this.deleteSessionsByUser(userRole.user_id),
-
         await this.service.noSql.userRoleNoSql.deleteMany({
           where: {
             role_id: userRole.role_id,
@@ -1053,9 +1035,6 @@ export class NestIamCoreService {
     }
 
     await Promise.allSettled([
-      // Remove old session
-      await this.deleteSessionsByUser(userRole.user_id),
-
       await this.service.sql.userRoleSql.deleteMany({
         where: {
           user_id: Number(userRole.user_id),
@@ -1133,9 +1112,6 @@ export class NestIamCoreService {
       expiredMessage: this.service.configMaps.tokenExpiredMessage,
       invalidMessage: this.service.configMaps.tokenInvalidMessage,
     }) as { sid: string; uid: string };
-
-    // Remove old session
-    await this.deleteSessionsByUser(verificationToken.uid);
 
     let sessionId: string;
     if (this.service.isNoSql()) {
